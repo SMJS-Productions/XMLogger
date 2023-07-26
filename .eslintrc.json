@@ -203,28 +203,10 @@
   },
   "overrides": [
     {
-      "files": [ "src/types/enums/*.ts" ],
-      "rules": {
-        "no-magic-numbers": "off"
-      }
-    },
-    {
       "files": [ "src/statics/*.ts" ],
       "rules": {
         "max-lines": "off",
         "quote-props": [ "error", "always" ]
-      }
-    },
-    {
-      "files": [ "src/statics/schemas/*/*.ts" ],
-      "rules": {
-        "camelcase": "off"
-      }
-    },
-    {
-      "files": [ "InfoConsole.ts" ],
-      "rules": {
-        "no-console": "off"
       }
     }
   ]

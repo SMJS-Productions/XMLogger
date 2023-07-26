@@ -1,5 +1,5 @@
 {
-  "name": "ht-logger",
+  "name": "xmlogger",
   "version": "1.0.0",
   "description": "A logging system with detailed logging info and a simple interface with extensible markup support",
   "main": "dist/index.js",

@@ -106,11 +106,6 @@
     "consistent-this": [ "error", "INSTANCE" ],
     "operator-assignment": [ "error", "always" ],
     "capitalized-comments": [ "error", "always" ],
-    "max-lines": [ "error", {
-      "max": 300,
-      "skipComments": true,
-      "skipBlankLines": true
-    } ],
     "logical-assignment-operators": [ "error", "always", {
       "enforceForIfStatements": true
     } ],
@@ -199,13 +194,13 @@
     "prefer-exponentiation-operator": "error",
     // Managed by TypeScript
     "@typescript-eslint/no-unused-vars": "off",
-    "@typescript-eslint/no-explicit-any": "off"
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-non-null-assertion": "off"
   },
   "overrides": [
     {
       "files": [ "src/statics/*.ts" ],
       "rules": {
-        "max-lines": "off",
         "quote-props": [ "error", "always" ]
       }
     }

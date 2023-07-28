@@ -3,29 +3,11 @@ import type { EscapeCodeTags } from "./types/EscapeCodeTags";
 import type { LoggingType } from "./types/LoggingType";
 import { format, formatWithOptions } from "util";
 import { ESCAPE_CODE_LIST } from "./statics/EscapeCodeList";
+import { Settings } from "./Settings";
 
 export class XMLogger {
 
-    private static readonly TYPE_TAGS = new Map<LoggingType, EscapeCodeTags>([
-        [ "log", [ "fg-steel-blue" ] ],
-        [ "info", [ "fg-steel-blue" ] ],
-        [ "warn", [ "pfg-yellow" ] ],
-        [ "debug", [ "sfg-cyan" ] ],
-        [ "error", [ "fg-dark-red" ] ],
-        [ "trace", [ "fg-dark-red" ] ],
-        [ "traceInfo", [ "fg-steel-blue" ] ],
-        [ "dir", [ "fg-steel-blue" ] ],
-        [ "table", [ "fg-steel-blue" ] ],
-        [ "time", [ "fg-steel-blue" ] ],
-        [ "timeEnd", [ "fg-steel-blue" ] ],
-        [ "assertSuccess", [ "sfg-green" ] ],
-        [ "assertFailure", [ "fg-dark-red" ] ],
-        [ "clear", [ "sfg-magenta" ] ]
-    ]);
-
-    private static readonly ENVIRONMENTS = new Map<string, EscapeCodeTags>([
-        [ "Console", [ "bold", "fg-dark-red" ] ]
-    ]);
+    public static readonly SETTINGS = new Settings();
 
     private static readonly LISTENERS = new Map<LoggingType | "output" | string, ((message: string) => any)[]>();
 
@@ -33,27 +15,7 @@ export class XMLogger {
 
     private static readonly CAPTURES = new Array<string>();
 
-    private static readonly TYPE_PADDING = Math.max(...[ ...XMLogger.TYPE_TAGS.keys() ].map((key) => key.split(/[A-Z]/)[0].length));
-
-    private static WITH_PADDING = true;
-
-    private static WITH_DATE = true;
-
-    public static togglePadding(state: boolean): void {
-        XMLogger.WITH_PADDING = state;
-    }
-
-    public static toggleDate(state: boolean): void {
-        XMLogger.WITH_DATE = state;
-    }
-
-    public static registerEnv(tag: string, ...escapeCodeTags: EscapeCodeTags): void {
-        this.ENVIRONMENTS.set(tag, escapeCodeTags);
-    }
-
-    public static setTypeColors(type: LoggingType, ...escapeCodeTags: EscapeCodeTags): void {
-        XMLogger.TYPE_TAGS.set(type, escapeCodeTags);
-    }
+    private static readonly TYPE_PADDING = Math.max(...XMLogger.SETTINGS.getTypes().map((key) => key.split(/[A-Z]/)[0].length));
 
     public static on(type: LoggingType | "output" | string, callback: (message: string) => any): void {
         if (XMLogger.LISTENERS.has(type)) {
@@ -200,22 +162,23 @@ export class XMLogger {
     private readonly message: string;
 
     private constructor(name: LoggingType, env: string, message: any, ...params: any[]) {
-        if (XMLogger.ENVIRONMENTS.has(env)) {
+        if (XMLogger.SETTINGS.hasEnv(env)) {
+            const usesPadding = XMLogger.SETTINGS.usesPadding();
             const baseDate = new Date();
             const correctedDate = new Date(baseDate.setMinutes(baseDate.getMinutes() + baseDate.getTimezoneOffset()));
-            const typeTags = this.formatTags(XMLogger.TYPE_TAGS.get(name)!);
-            const envTags = this.formatTags(XMLogger.ENVIRONMENTS.get(env)!);
+            const typeTags = this.formatTags(XMLogger.SETTINGS.getTypeTags(name));
+            const envTags = this.formatTags(XMLogger.SETTINGS.getEnvTags(env)!);
 
             this.env = env;
             this.name = name;
             this.message = format(
                 "<%s>%s</r> [<%s>%s</r>%s] [%s%s%s</r>]: %s",
                 typeTags,
-                XMLogger.WITH_DATE ? correctedDate.toLocaleString("en-GB") : correctedDate.toLocaleTimeString("en-GB"),
+                XMLogger.SETTINGS.usesDate() ? correctedDate.toLocaleString("en-GB") : correctedDate.toLocaleTimeString("en-GB"),
                 typeTags,
                 name.split(/[A-Z]/)[0].toUpperCase(),
-                XMLogger.WITH_PADDING ? " ".repeat(XMLogger.TYPE_PADDING - name.length) : "",
-                XMLogger.WITH_PADDING ? " ".repeat(Math.max(...[ ...XMLogger.ENVIRONMENTS.keys() ].map((key) => key.length)) - env.length) : "",
+                usesPadding ? " ".repeat(XMLogger.TYPE_PADDING - name.length) : "",
+                usesPadding ? " ".repeat(Math.max(...XMLogger.SETTINGS.getEnvs().map((key) => key.length)) - env.length) : "",
                 envTags,
                 env,
                 formatWithOptions({ colors: true, depth: 2 }, message, ...params)

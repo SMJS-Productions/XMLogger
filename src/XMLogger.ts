@@ -163,33 +163,52 @@ export class XMLogger {
 
     private constructor(type: LoggingType, env: string, message: any, ...params: any[]) {
         if (XMLogger.SETTINGS.hasEnv(env)) {
+            const emptyString = () => "";
             const minTypeName = type.split(/[A-Z]/)[0].toUpperCase();
-            const usesPadding = XMLogger.SETTINGS.usesPadding();
-            const usesDateTime = XMLogger.SETTINGS.usesDateTime();
             const date = new Date();
             const correctedDate = new Date(date.setMinutes(date.getMinutes() + date.getTimezoneOffset()));
+            const templateTagPopulators = new Map([
+                [ "type", () => minTypeName ],
+                [ "type-tags", () => this.formatTags(XMLogger.SETTINGS.getTypeTags(type)) ],
+                [ "env", () => env ],
+                [ "env-tags", () => this.formatTags(XMLogger.SETTINGS.getEnvTags(env)!) ],
+                [ "message", () => formatWithOptions({ colors: true, depth: 2 }, message, ...params) ]
+            ]);
+
+            if (XMLogger.SETTINGS.usesPadding()) {
+                templateTagPopulators.set("type-padding", () => " ".repeat(XMLogger.TYPE_PADDING - minTypeName.length));
+                templateTagPopulators.set("env-padding", () => " ".repeat(Math.max(...XMLogger.SETTINGS.getEnvs().map((key) => key.length)) - env.length));
+            } else {
+                [ "type-padding", "env-padding" ].forEach((key) => templateTagPopulators.set(key, emptyString));
+            }
+
+            if (XMLogger.SETTINGS.usesDateTime()) {
+                templateTagPopulators.set("date-time", () => correctedDate.toLocaleString("en-GB"));
+                templateTagPopulators.set("date", () => correctedDate.toLocaleDateString("en-GB"));
+                templateTagPopulators.set("time", () => correctedDate.toLocaleTimeString("en-GB"));
+                templateTagPopulators.set("date-time-padding", () => " ");
+            } else {
+                [ "date-time", "date", "time", "date-time-padding" ].forEach((key) => templateTagPopulators.set(key, emptyString));
+            }
 
             this.env = env;
             this.type = type;
             this.message = XMLogger.SETTINGS.getTemplate()
-                .replaceAll("<type>", minTypeName)
-                .replaceAll("<type-tags>", this.formatTags(XMLogger.SETTINGS.getTypeTags(type)))
-                .replaceAll("<type-padding>", usesPadding ? " ".repeat(XMLogger.TYPE_PADDING - minTypeName.length) : "")
-                .replaceAll("<env>", env)
-                .replaceAll("<env-tags>", this.formatTags(XMLogger.SETTINGS.getEnvTags(env)!))
-                .replaceAll("<env-padding>", usesPadding ? " ".repeat(Math.max(...XMLogger.SETTINGS.getEnvs().map((key) => key.length)) - env.length) : "")
-                .replaceAll("<date-time>", usesDateTime ? correctedDate.toLocaleString("en-GB") : "")
-                .replaceAll("<date>", usesDateTime ? correctedDate.toLocaleDateString("en-GB") : "")
-                .replaceAll("<time>", usesDateTime ? correctedDate.toLocaleTimeString("en-GB") : "")
-                .replaceAll("<date-time-padding>", usesDateTime ? " " : "")
-                .replaceAll("<message>", formatWithOptions({ colors: true, depth: 2 }, message, ...params))
+                .replace(/<(?<type>.*?)>/g, (original, type) => {
+                    if (templateTagPopulators.has(type)) {
+                        return templateTagPopulators.get(type)!();
+                    } else {
+                        return original;
+                    }
+                })
                 .replace(/<(?<type>.*?)>/g, (original, type: keyof typeof ESCAPE_CODE_LIST) => {
-                    if (ESCAPE_CODE_LIST[type]) {
+                    if (type in ESCAPE_CODE_LIST) {
                         // Did you know \x1b[u is the code to restore the cursor position? I certainly found out the hard way with an undefined error
                         return `\x1b[${ESCAPE_CODE_LIST[type].toString()}m`;
                     } else {
                         return original;
                     }
+
                 });
         } else {
             XMLogger.error("Console", "The environment <fg-red>%s</r> is not registered", env);

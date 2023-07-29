@@ -1,7 +1,7 @@
 import type { InspectOptions } from "util";
 import type { EscapeCodeTags } from "./types/EscapeCodeTags";
 import type { LoggingType } from "./types/LoggingType";
-import { format, formatWithOptions } from "util";
+import { formatWithOptions } from "util";
 import { ESCAPE_CODE_LIST } from "./statics/EscapeCodeList";
 import { Settings } from "./Settings";
 
@@ -157,39 +157,40 @@ export class XMLogger {
 
     private readonly env: string;
 
-    private readonly name: string;
+    private readonly type: LoggingType;
 
     private readonly message: string;
 
-    private constructor(name: LoggingType, env: string, message: any, ...params: any[]) {
+    private constructor(type: LoggingType, env: string, message: any, ...params: any[]) {
         if (XMLogger.SETTINGS.hasEnv(env)) {
+            const minTypeName = type.split(/[A-Z]/)[0].toUpperCase();
             const usesPadding = XMLogger.SETTINGS.usesPadding();
-            const baseDate = new Date();
-            const correctedDate = new Date(baseDate.setMinutes(baseDate.getMinutes() + baseDate.getTimezoneOffset()));
-            const typeTags = this.formatTags(XMLogger.SETTINGS.getTypeTags(name));
-            const envTags = this.formatTags(XMLogger.SETTINGS.getEnvTags(env)!);
+            const usesDateTime = XMLogger.SETTINGS.usesDateTime();
+            const date = new Date();
+            const correctedDate = new Date(date.setMinutes(date.getMinutes() + date.getTimezoneOffset()));
 
             this.env = env;
-            this.name = name;
-            this.message = format(
-                "<%s>%s</r> [<%s>%s</r>%s] [%s%s%s</r>]: %s",
-                typeTags,
-                XMLogger.SETTINGS.usesDate() ? correctedDate.toLocaleString("en-GB") : correctedDate.toLocaleTimeString("en-GB"),
-                typeTags,
-                name.split(/[A-Z]/)[0].toUpperCase(),
-                usesPadding ? " ".repeat(XMLogger.TYPE_PADDING - name.length) : "",
-                usesPadding ? " ".repeat(Math.max(...XMLogger.SETTINGS.getEnvs().map((key) => key.length)) - env.length) : "",
-                envTags,
-                env,
-                formatWithOptions({ colors: true, depth: 2 }, message, ...params)
-            ).replace(/<(?<type>.*?)>/g, (original, type: keyof typeof ESCAPE_CODE_LIST) => {
-                if (ESCAPE_CODE_LIST[type]) {
-                    // Did you know \x1b[u is the code to restore the cursor position? I certainly found out the hard way with an undefined error
-                    return `\x1b[${ESCAPE_CODE_LIST[type].toString()}m`;
-                } else {
-                    return original;
-                }
-            });
+            this.type = type;
+            this.message = XMLogger.SETTINGS.getTemplate()
+                .replaceAll("<type>", minTypeName)
+                .replaceAll("<type-tags>", this.formatTags(XMLogger.SETTINGS.getTypeTags(type)))
+                .replaceAll("<type-padding>", usesPadding ? " ".repeat(XMLogger.TYPE_PADDING - minTypeName.length) : "")
+                .replaceAll("<env>", env)
+                .replaceAll("<env-tags>", this.formatTags(XMLogger.SETTINGS.getEnvTags(env)!))
+                .replaceAll("<env-padding>", usesPadding ? " ".repeat(Math.max(...XMLogger.SETTINGS.getEnvs().map((key) => key.length)) - env.length) : "")
+                .replaceAll("<date-time>", usesDateTime ? correctedDate.toLocaleString("en-GB") : "")
+                .replaceAll("<date>", usesDateTime ? correctedDate.toLocaleDateString("en-GB") : "")
+                .replaceAll("<time>", usesDateTime ? correctedDate.toLocaleTimeString("en-GB") : "")
+                .replaceAll("<date-time-padding>", usesDateTime ? " " : "")
+                .replaceAll("<message>", formatWithOptions({ colors: true, depth: 2 }, message, ...params))
+                .replace(/<(?<type>.*?)>/g, (original, type: keyof typeof ESCAPE_CODE_LIST) => {
+                    if (ESCAPE_CODE_LIST[type]) {
+                        // Did you know \x1b[u is the code to restore the cursor position? I certainly found out the hard way with an undefined error
+                        return `\x1b[${ESCAPE_CODE_LIST[type].toString()}m`;
+                    } else {
+                        return original;
+                    }
+                });
         } else {
             XMLogger.error("Console", "The environment <fg-red>%s</r> is not registered", env);
 
@@ -199,9 +200,10 @@ export class XMLogger {
 
     private postLog(): void {
         XMLogger.CAPTURES.push(this.message);
+
         this.emit("output", this.message);
         this.emit(this.env, this.message);
-        this.emit(this.name, this.message);
+        this.emit(this.type, this.message);
     }
 
     private formatTags(tags: EscapeCodeTags): string {

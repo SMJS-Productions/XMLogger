@@ -7,9 +7,11 @@ export class Settings {
 
     public readonly environments: Map<string, EscapeCodeTags>;
 
+    private useDateTime: boolean;
+
     private usePadding: boolean;
 
-    private useDate: boolean;
+    private template: string;
 
     constructor() {
         this.typeTags = new Map([
@@ -31,8 +33,9 @@ export class Settings {
         this.environments = new Map([
             [ "Console", [ "bold", "fg-dark-red" ] ]
         ]);
+        this.useDateTime = true;
         this.usePadding = true;
-        this.useDate = true;
+        this.template = "<type-tags><date-time></r><date-time-padding>[<type-tags><type></r><type-padding>] [<env-padding><env-tags><env></r>]: <message>";
     }
 
     public togglePadding(state: boolean): void {
@@ -43,12 +46,36 @@ export class Settings {
         return this.usePadding;
     }
 
-    public toggleDate(state: boolean): void {
-        this.useDate = state;
+    public toggleDateTime(state: boolean): void {
+        this.useDateTime = state;
     }
 
-    public usesDate(): boolean {
-        return this.useDate;
+    public usesDateTime(): boolean {
+        return this.useDateTime;
+    }
+
+    /**
+     * @param template Supports the following tags:
+     * - `<type>`: The type of the log.
+     * - `<type-tags>`: The tags of the log type (Should be ended with a </r>).
+     * - `<type-padding>`: The additional padding of the log type.
+     * - `<env>`: The environment of the log.
+     * - `<env-tags>`: The tags of the log environment (Should be ended with a </r>).
+     * - `<env-padding>`: The additional padding of the log environment.
+     * - `<date-time>`: The date and time of the log.
+     * - `<date>`: The date of the log.
+     * - `<time>`: The time of the log.
+     * - `<date-time-padding>` An additional space which can be ignored if date-time is disabled.
+     * - `<message>`: The message of the log.
+     * - `</r>`: Resets the tags of the log.
+     * - All other color tags are supported.
+     */
+    public setTemplate(template: string): void {
+        this.template = template;
+    }
+
+    public getTemplate(): string {
+        return this.template;
     }
 
     public setTypeColors(type: LoggingType, ...escapeCodeTags: EscapeCodeTags): void {

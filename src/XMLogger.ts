@@ -1,6 +1,7 @@
 import type { InspectOptions } from "util";
 import type { EscapeCodeTags } from "./types/EscapeCodeTags";
 import type { LoggingType } from "./types/LoggingType";
+import type { LogHistory } from "./types/LogHistory";
 import { formatWithOptions } from "util";
 import { ESCAPE_CODE_LIST } from "./statics/EscapeCodeList";
 import { Settings } from "./Settings";
@@ -13,7 +14,7 @@ export class XMLogger {
 
     private static readonly TIMERS = new Map<string, number>();
 
-    private static readonly CAPTURES = new Array<string>();
+    private static readonly CAPTURES = new Array<LogHistory>();
 
     private static readonly TYPE_PADDING = Math.max(...XMLogger.SETTINGS.getTypes().map((key) => key.split(/[A-Z]/)[0].length));
 
@@ -25,7 +26,7 @@ export class XMLogger {
         }
     }
 
-    public static getOutput(): string[] {
+    public static getOutput(): LogHistory[] {
         return XMLogger.CAPTURES;
     }
 
@@ -218,7 +219,11 @@ export class XMLogger {
     }
 
     private postLog(): void {
-        XMLogger.CAPTURES.push(this.message);
+        XMLogger.CAPTURES.push({
+            env: this.env,
+            type: this.type,
+            message: this.message
+        });
 
         this.emit("output", this.message);
         this.emit(this.env, this.message);

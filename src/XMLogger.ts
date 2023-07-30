@@ -10,7 +10,7 @@ export class XMLogger {
 
     public static readonly SETTINGS = new Settings();
 
-    private static readonly LISTENERS = new Map<LoggingType | "output" | string, ((message: string) => any)[]>();
+    private static readonly LISTENERS = new Map<LoggingType | "output" | string, Array<(env: string, ...args: any[]) => any>>();
 
     private static readonly TIMERS = new Map<string, number>();
 
@@ -18,7 +18,15 @@ export class XMLogger {
 
     private static readonly TYPE_PADDING = Math.max(...XMLogger.SETTINGS.getTypes().map((key) => key.split(/[A-Z]/)[0].length));
 
-    public static on(type: LoggingType | "output" | string, callback: (message: string) => any): void {
+    public static on(type: "dir", callback: (env: string, message: string, object: any, options: InspectOptions) => any): void;
+
+    public static on(type: "table", callback: (env: string, message: string, object: any, columns: string[]) => any): void;
+
+    public static on(type: Exclude<LoggingType, "dir" | "table">, callback: (env: string, message: string) => any): void;
+
+    public static on(type: "output" | string, callback: (env: string, message?: string, object?: any, optionsOrColumns?: InspectOptions | string[]) => any): void;
+
+    public static on(type: LoggingType | "output" | string, callback: (env: string, ...args: any[]) => any): void {
         if (XMLogger.LISTENERS.has(type)) {
             XMLogger.LISTENERS.get(type)!.push(callback);
         } else {
@@ -86,22 +94,22 @@ export class XMLogger {
     }
 
     public static dir<T>(env: string, message: T, options: InspectOptions = {}): void {
-        const instance = new XMLogger("dir", env, formatWithOptions({
+        const instance = new XMLogger("dir", env, message, {
             colors: true,
             depth: Infinity,
             ...options
-        }, message));
+        });
 
         console.info(instance.toString());
         instance.postLog();
     }
 
-    public static table(env: string, tabularData: any[] | Record<any, any>, properties?: string[]): void {
-        const instance = new XMLogger("table", env, "");
+    public static table(env: string, tabularData: any[] | Record<any, any>, columns?: string[]): void {
+        const instance = new XMLogger("table", env, tabularData, columns);
 
         console.info(instance.toString());
         // IDC that this doesn't log everything in the events, someone else can try telling an event what these edge case filled tables look like
-        console.table(tabularData, properties);
+        console.table(tabularData, columns);
         instance.postLog();
     }
 
@@ -131,15 +139,15 @@ export class XMLogger {
         instance.postLog();
     }
 
-    public static assert<T>(env: string, assertion: any, ...params: T[]): void {
+    public static assert(env: string, assertion: any): void {
         let instance;
 
         if (assertion) {
-            instance = new XMLogger("assertSuccess", env, "Successful assertion", ...params);
+            instance = new XMLogger("assertSuccess", env, "Successful assertion");
 
             console.info(instance.toString());
         } else {
-            instance = new XMLogger("assertFailure", env, "Assertion failed", ...params);
+            instance = new XMLogger("assertFailure", env, "Assertion failed");
 
             console.trace(instance.toString());
         }
@@ -162,6 +170,10 @@ export class XMLogger {
 
     private readonly message: string;
 
+    private readonly originalMessage: any;
+
+    private readonly params: any[];
+
     private constructor(type: LoggingType, env: string, message: any, ...params: any[]) {
         if (XMLogger.SETTINGS.hasEnv(env)) {
             const emptyString = () => "";
@@ -172,9 +184,16 @@ export class XMLogger {
                 [ "type", () => minTypeName ],
                 [ "type-tags", () => this.formatTags(XMLogger.SETTINGS.getTypeTags(type)) ],
                 [ "env", () => env ],
-                [ "env-tags", () => this.formatTags(XMLogger.SETTINGS.getEnvTags(env)!) ],
-                [ "message", () => formatWithOptions({ colors: true, depth: 2 }, message, ...params) ]
+                [ "env-tags", () => this.formatTags(XMLogger.SETTINGS.getEnvTags(env)!) ]
             ]);
+
+            if (type == "table") {
+                templateTagPopulators.set("message", emptyString);
+            } else if (type == "dir") {
+                templateTagPopulators.set("message", () => formatWithOptions(params[0], message));
+            } else {
+                templateTagPopulators.set("message", () => formatWithOptions({ colors: true, depth: 2 }, message, ...params));
+            }
 
             if (XMLogger.SETTINGS.usesPadding()) {
                 templateTagPopulators.set("type-padding", () => " ".repeat(XMLogger.TYPE_PADDING - minTypeName.length));
@@ -194,6 +213,8 @@ export class XMLogger {
 
             this.env = env;
             this.type = type;
+            this.originalMessage = message;
+            this.params = params;
             this.message = XMLogger.SETTINGS.getTemplate()
                 .replace(/<(?<type>.*?)>/g, (original, type) => {
                     if (templateTagPopulators.has(type)) {
@@ -219,30 +240,43 @@ export class XMLogger {
     }
 
     private postLog(): void {
-        XMLogger.CAPTURES.push({
+        const capture: LogHistory = <LogHistory>{
             env: this.env,
             type: this.type,
             message: this.message
-        });
+        };
 
-        this.emit("output", this.message);
-        this.emit(this.env, this.message);
-        this.emit(this.type, this.message);
+        if (capture.type == "dir") {
+            capture.object = this.originalMessage;
+            capture.options = this.params[0];
+        } else if (capture.type == "table") {
+            capture.object = this.originalMessage;
+            capture.columns = this.params[0];
+        }
+
+        XMLogger.CAPTURES.push(capture);
+
+        this.emit("output");
+        this.emit(this.env);
+        this.emit(this.type);
     }
 
     private formatTags(tags: EscapeCodeTags): string {
         return tags.map((tag) => `<${tag}>`).join("");
     }
 
-    private emit(event: LoggingType | "output" | string, message = ""): void {
+    private emit(event: LoggingType | "output" | string): void {
         const listeners = XMLogger.LISTENERS.get(event);
 
-        listeners?.forEach((callback, index) => {
+        listeners?.forEach((callback) => {
             try {
-                callback(message);
+                if (this.type == "dir" || this.type == "table") {
+                    callback(this.env, this.message, this.originalMessage, this.params[0]);
+                } else {
+                    callback(this.env, this.message);
+                }
             } catch (error) {
-                // Handling destroyed callbacks
-                listeners.splice(index, 1);
+                // Leeeets pretend this never happened
             }
         });
     }

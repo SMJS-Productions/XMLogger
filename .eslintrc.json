@@ -113,11 +113,6 @@
       "avoidQuotes": true,
       "avoidExplicitReturnArrows": true
     } ],
-    "max-lines-per-function": [ "error", {
-      "max": 50,
-      "skipComments": true,
-      "skipBlankLines": true
-    } ],
     "no-magic-numbers": [ "error", {
       // The values are quite standard in slicing, dividing, etc.
       "ignore": [ -1, 0, 1, 2, 3, 4, 5, 10, 100, 1000 ],
@@ -174,7 +169,6 @@
     "no-implicit-globals": "error",
     "no-unreachable-loop": "error",
     "prefer-object-spread": "error",
-    "prefer-destructuring": "error",
     "no-underscore-dangle": "error",
     "no-negated-condition": "error",
     "prefer-regex-literals": "error",
@@ -204,5 +198,6 @@
         "quote-props": [ "error", "always" ]
       }
     }
-  ]
+  ],
+  "ignorePatterns": [ "dist/**/*.js", "test/**/*.ts" ]
 }

@@ -1,9 +1,9 @@
 {
   "name": "@smjs/xmlogger",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A logging system with detailed logging info and a simple interface with markup support",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/XMLogger.js",
+  "types": "dist/XMLogger.d.ts",
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",

@@ -1,14 +1,14 @@
 {
-  "name": "xmlogger",
+  "name": "@smjs/xmlogger",
   "version": "1.0.0",
-  "description": "A logging system with detailed logging info and a simple interface with extensible markup support",
+  "description": "A logging system with detailed logging info and a simple interface with markup support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "preprepare": "eslint src/",
     "prepare": "npm run build",
-    "pretest": "npm run preprepare",
+    "postprepare": "npm test",
+    "pretest": "eslint src/",
     "test": "cucumber-js"
   },
   "repository": {

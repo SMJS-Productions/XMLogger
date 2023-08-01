@@ -155,13 +155,16 @@ export class XMLogger {
         instance.postLog();
     }
 
-    public static clear(env: string): void {
-        const instance = new XMLogger("clear", env, "The console was cleared");
-
+    public static clear(env: string, confirmation = true): void {
         XMLogger.CAPTURES.splice(0, XMLogger.CAPTURES.length);
         console.clear();
-        console.info(instance.toString());
-        instance.postLog();
+
+        if (confirmation) {
+            const instance = new XMLogger("clear", env, "The console was cleared");
+
+            console.info(instance.toString());
+            instance.postLog();
+        }
     }
 
     private readonly env: string;
@@ -171,6 +174,8 @@ export class XMLogger {
     private readonly message: string;
 
     private readonly originalMessage: any;
+
+    private readonly formattedMessage: string;
 
     private readonly params: any[];
 
@@ -184,15 +189,16 @@ export class XMLogger {
                 [ "type", () => minTypeName ],
                 [ "type-tags", () => this.formatTags(XMLogger.SETTINGS.getTypeTags(type)) ],
                 [ "env", () => env ],
-                [ "env-tags", () => this.formatTags(XMLogger.SETTINGS.getEnvTags(env)!) ]
+                [ "env-tags", () => this.formatTags(XMLogger.SETTINGS.getEnvTags(env)!) ],
+                [ "message", () => this.formattedMessage ]
             ]);
 
             if (type == "table") {
-                templateTagPopulators.set("message", emptyString);
+                this.formattedMessage = "";
             } else if (type == "dir") {
-                templateTagPopulators.set("message", () => formatWithOptions(params[0], message));
+                this.formattedMessage = formatWithOptions(params[0], message);
             } else {
-                templateTagPopulators.set("message", () => formatWithOptions({ colors: true, depth: 2 }, message, ...params));
+                this.formattedMessage = formatWithOptions({ colors: true, depth: 2 }, message, ...params);
             }
 
             if (XMLogger.SETTINGS.usesPadding()) {
@@ -243,14 +249,14 @@ export class XMLogger {
         const capture: LogHistory = <LogHistory>{
             env: this.env,
             type: this.type,
-            message: this.message
+            message: this.message,
+            original: this.originalMessage,
+            formatted: this.formattedMessage
         };
 
         if (capture.type == "dir") {
-            capture.object = this.originalMessage;
             capture.options = this.params[0];
         } else if (capture.type == "table") {
-            capture.object = this.originalMessage;
             capture.columns = this.params[0];
         }
 

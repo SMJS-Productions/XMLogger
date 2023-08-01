@@ -1,7 +1,12 @@
 /**
  * @see https://www.rapidtables.com/web/color/RGB_Color.html
+ *
+ * Format: key -> escape code, fg = foreground, bg = background
+ *
+ * The keys can be used in between <> in a log & template.
  */
 export const ESCAPE_CODE_LIST = {
+    // Formatting
     "/r": "0",
     "bold": "1",
     "italic": "3",
@@ -10,6 +15,7 @@ export const ESCAPE_CODE_LIST = {
     "hidden": "8",
     "strikethrough": "9",
 
+    // Standard Colors
     "sfg-black": "30",
     "sfg-red": "31",
     "sfg-green": "32",
@@ -46,6 +52,7 @@ export const ESCAPE_CODE_LIST = {
     "sbg-bright-cyan": "106",
     "sbg-bright-white": "107",
 
+    // Pastel colors
     "pfg-black": "38;2;29;28;26",
     "pbg-black": "48;2;29;28;26",
     "pfg-red": "38;2;255;105;97",
@@ -63,6 +70,7 @@ export const ESCAPE_CODE_LIST = {
     "pfg-white": "38;2;250;248;246",
     "pbg-white": "48;2;250;248;246",
 
+    // Custom colors
     "fg-maroon": "38;2;128;0;0",
     "bg-maroon": "48;2;128;0;0",
     "fg-dark-red": "38;2;139;0;0",

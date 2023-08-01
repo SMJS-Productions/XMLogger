@@ -1,0 +1,14 @@
+{
+  "default": {
+    "paths": [ "tests/features/**/*.feature" ],
+    "require": [ "tests/src/**/*.test.ts" ],
+    "requireModule": [ "ts-node/register" ],
+    "parallel": 4,
+    "backtrace": true,
+    "publishQuiet": true,
+    "formatOptions": {
+      "colorsEnabled": true,
+      "snippetInterface": "synchronous"
+    }
+  }
+}

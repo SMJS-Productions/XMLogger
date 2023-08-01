@@ -21,7 +21,7 @@ By default, XMLogger will add padding to the log type and environment to align t
 
 By default, XMLogger will add the date-time to the logs. You can toggle this by calling `XMLogger.SETTINGS.toggleDateTime`.
 
-### Overwriting template
+### Overwriting the template
 
 Overwrites the default template of the logs. You can set the template by calling `XMLogger.SETTINGS.setTemplate`. The following tags are available:
 

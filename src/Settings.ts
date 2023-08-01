@@ -98,6 +98,14 @@ export class Settings {
         this.environments.set(tag, escapeCodeTags);
     }
 
+    public unregisterEnv(tag: string): void {
+        if (tag == "NA") {
+            throw new Error("Cannot unregister the NA environment.");
+        } else {
+            this.environments.delete(tag);
+        }
+    }
+
     public hasEnv(env: string): boolean {
         return this.environments.has(env);
     }

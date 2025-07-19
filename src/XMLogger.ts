@@ -2,6 +2,7 @@ import type { InspectOptions } from "util";
 import type { EscapeCodeTags } from "./types/EscapeCodeTags";
 import type { LoggingType } from "./types/LoggingType";
 import type { LogHistory } from "./types/LogHistory";
+import type { Template } from "./types/Template";
 import { formatWithOptions } from "util";
 import { ESCAPE_CODE_LIST } from "./statics/EscapeCodeList";
 import { Settings } from "./Settings";
@@ -38,42 +39,42 @@ export class XMLogger {
         return XMLogger.CAPTURES;
     }
 
-    public static log<T, U>(env: string, message: T, ...params: U[]): void {
+    public static log<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
         const instance = new XMLogger("log", env, message, ...params);
 
         console.log(instance.toString());
         instance.postLog();
     }
 
-    public static info<T, U>(env: string, message: T, ...params: U[]): void {
+    public static info<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
         const instance = new XMLogger("info", env, message, ...params);
 
         console.info(instance.toString());
         instance.postLog();
     }
 
-    public static warn<T, U>(env: string, message: T, ...params: U[]): void {
+    public static warn<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
         const instance = new XMLogger("warn", env, message, ...params);
 
         console.warn(instance.toString());
         instance.postLog();
     }
 
-    public static debug<T, U>(env: string, message: T, ...params: U[]): void {
+    public static debug<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
         const instance = new XMLogger("debug", env, message, ...params);
 
         console.debug(instance.toString());
         instance.postLog();
     }
 
-    public static error<T, U>(env: string, message: T, ...params: U[]): void {
+    public static error<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
         const instance = new XMLogger("error", env, message, ...params);
 
         console.error(instance.toString());
         instance.postLog();
     }
 
-    public static trace<T, U>(env: string, message: T, ...params: U[]): void {
+    public static trace<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
         const instance = new XMLogger("trace", env, message, ...params, "\n", new Error().stack?.split("\n")
             .slice(2)
             .join("\n")
@@ -83,7 +84,7 @@ export class XMLogger {
         instance.postLog();
     }
 
-    public static traceInfo<T, U>(env: string, message: T, ...params: U[]): void {
+    public static traceInfo<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
         const instance = new XMLogger("traceInfo", env, message, ...params, "\n", new Error().stack?.split("\n")
             .slice(2)
             .join("\n")
@@ -93,7 +94,7 @@ export class XMLogger {
         instance.postLog();
     }
 
-    public static dir<T>(env: string, message: T, options: InspectOptions = {}): void {
+    public static dir(env: string, message: any, options: InspectOptions = {}): void {
         const instance = new XMLogger("dir", env, message, {
             colors: true,
             depth: Infinity,
@@ -126,7 +127,7 @@ export class XMLogger {
         let instance;
 
         if (XMLogger.TIMERS.has(trueLabel)) {
-            instance = new XMLogger("timeEnd", env, "Timer %s ended after %ss", label || "unknown", (
+            instance = new XMLogger("timeEnd", env, "Timer %s ended after %ds", label || "unknown", (
                 Date.now() - XMLogger.TIMERS.get(trueLabel)!
             ) / 1000);
 

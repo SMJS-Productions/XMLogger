@@ -7,11 +7,11 @@ export type LogHistory = {
     original: any;
     formatted: string;
 } & ({
-    type: Exclude<LoggingType, "dir" | "table">
+    type: Exclude<LoggingType, "dir" | "table">;
 } | {
-    type: "dir",
+    type: "dir";
     options: InspectOptions;
 } | {
-    type: "table",
+    type: "table";
     columns: string[];
 });

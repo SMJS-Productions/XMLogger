@@ -39,42 +39,54 @@ export class XMLogger {
         return XMLogger.CAPTURES;
     }
 
-    public static log<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
+    public static log<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void;
+    public static log<T>(env: string, message: Exclude<T, string>, ...params: any[]): void;
+    public static log(env: string, message: any, ...params: any[]): void {
         const instance = new XMLogger("log", env, message, ...params);
 
         console.log(instance.toString());
         instance.postLog();
     }
 
-    public static info<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
+    public static info<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void;
+    public static info<T>(env: string, message: Exclude<T, string>, ...params: any[]): void;
+    public static info(env: string, message: any, ...params: any[]): void {
         const instance = new XMLogger("info", env, message, ...params);
 
         console.info(instance.toString());
         instance.postLog();
     }
 
-    public static warn<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
+    public static warn<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void;
+    public static warn<T>(env: string, message: Exclude<T, string>, ...params: any[]): void;
+    public static warn(env: string, message: any, ...params: any[]): void {
         const instance = new XMLogger("warn", env, message, ...params);
 
         console.warn(instance.toString());
         instance.postLog();
     }
 
-    public static debug<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
+    public static debug<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void;
+    public static debug<T>(env: string, message: Exclude<T, string>, ...params: any[]): void;
+    public static debug(env: string, message: any, ...params: any[]): void {
         const instance = new XMLogger("debug", env, message, ...params);
 
         console.debug(instance.toString());
         instance.postLog();
     }
 
-    public static error<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
+    public static error<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void;
+    public static error<T>(env: string, message: Exclude<T, string>, ...params: any[]): void;
+    public static error(env: string, message: any, ...params: any[]): void {
         const instance = new XMLogger("error", env, message, ...params);
 
         console.error(instance.toString());
         instance.postLog();
     }
 
-    public static trace<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
+    public static trace<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void;
+    public static trace<T>(env: string, message: Exclude<T, string>, ...params: any[]): void;
+    public static trace(env: string, message: any, ...params: any[]): void {
         const instance = new XMLogger("trace", env, message, ...params, "\n", new Error().stack?.split("\n")
             .slice(2)
             .join("\n")
@@ -84,7 +96,9 @@ export class XMLogger {
         instance.postLog();
     }
 
-    public static traceInfo<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void {
+    public static traceInfo<T extends string>(env: string, message: T, ...params: [...Template<T>, ...any[]]): void;
+    public static traceInfo<T>(env: string, message: Exclude<T, string>, ...params: any[]): void;
+    public static traceInfo(env: string, message: any, ...params: any[]): void {
         const instance = new XMLogger("traceInfo", env, message, ...params, "\n", new Error().stack?.split("\n")
             .slice(2)
             .join("\n")
